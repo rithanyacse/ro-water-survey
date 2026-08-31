@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RO Water Public Survey</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Chart Data Labels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+            padding: 20px;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f5f5;
+
+            text-align: center;
+        }
+
+
+        /* MAIN CONTAINER */
+
+        .container {
+
+            width: 100%;
+
+            max-width: 950px;
+
+            margin: auto;
+
+            background: white;
+
+            padding: 30px;
+
+            border-radius: 15px;
+
+            box-shadow: 0 0 15px rgba(0,0,0,0.15);
+        }
+
+
+        /* TITLE */
+
+        h1 {
+
+            font-size: clamp(26px, 5vw, 40px);
+
+            margin: 0 0 10px;
+        }
+
+
+        .subtitle {
+
+            color: #555;
+
+            font-size: clamp(16px, 3vw, 20px);
+
+            margin-bottom: 30px;
+        }
+
+
+        h2 {
+
+            font-size: clamp(24px, 4vw, 30px);
+
+            margin-bottom: 25px;
+        }
+
+
+        /* =========================
+           VOTING RESULTS
+        ========================= */
+
+        .result-box {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: space-around;
+
+            gap: 20px;
+
+            margin-bottom: 10px;
+        }
+
+
+        .result {
+
+            flex: 1 1 300px;
+
+            font-size: clamp(17px, 3vw, 22px);
+        }
+
+
+        .count {
+
+            display: block;
+
+            font-size: clamp(32px, 6vw, 42px);
+
+            font-weight: bold;
+
+            margin: 8px 0;
+        }
+
+
+        /* RED */
+
+        .red {
+
+            color: #e00000;
+        }
+
+
+        /* GREEN */
+
+        .green {
+
+            color: #008f20;
+        }
+
+
+        /* =========================
+           GRAPH
+        ========================= */
+
+        .chart-container {
+
+            position: relative;
+
+            width: 100%;
+
+            height: 430px;
+
+            margin-top: 15px;
+        }
+
+
+        /* =========================
+           VOTING AREA
+        ========================= */
+
+        .voting-section {
+
+            width: 100%;
+
+            margin-top: 25px;
+        }
+
+
+        .vote-options {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: space-around;
+
+            align-items: center;
+
+            gap: 20px;
+        }
+
+
+        .vote-option {
+
+            flex: 1 1 300px;
+
+            font-size: clamp(16px, 3vw, 20px);
+
+            font-weight: bold;
+        }
+
+
+        .vote-option input {
+
+            width: 20px;
+
+            height: 20px;
+
+            margin-right: 8px;
+
+            cursor: pointer;
+
+            vertical-align: middle;
+        }
+
+
+        /* =========================
+           SUBMIT BUTTON
+        ========================= */
+
+        .submit-button {
+
+            margin-top: 25px;
+
+            padding: 13px 40px;
+
+            background: #333;
+
+            color: white;
+
+            border: none;
+
+            border-radius: 7px;
+
+            font-size: 18px;
+
+            cursor: pointer;
+        }
+
+
+        .submit-button:hover {
+
+            background: #555;
+        }
+
+
+        /* =========================
+           THANK YOU MESSAGE
+        ========================= */
+
+        .thank-you {
+
+            margin-top: 30px;
+
+            padding: 25px;
+
+            border-radius: 12px;
+
+            background: #f0fff4;
+
+            border: 1px solid #b7e4c7;
+        }
+
+
+        .success-icon {
+
+            font-size: 45px;
+        }
+
+
+        .thank-you h2 {
+
+            color: #008f20;
+
+            margin: 10px 0;
+        }
+
+
+        .thank-you p {
+
+            font-size: 19px;
+
+            margin: 8px;
+        }
+
+
+        .already-text {
+
+            color: #666;
+
+            font-size: 15px !important;
+        }
+
+
+        /* =========================
+           TABLET
+        ========================= */
+
+        @media (max-width: 700px) {
+
+            body {
+
+                padding: 10px;
+            }
+
+
+            .container {
+
+                padding: 20px;
+            }
+
+
+            .result-box {
+
+                flex-direction: column;
+            }
+
+
+            .result {
+
+                width: 100%;
+
+                flex: none;
+            }
+
+
+            .chart-container {
+
+                height: 380px;
+            }
+
+
+            .vote-options {
+
+                flex-direction: column;
+            }
+
+
+            .vote-option {
+
+                width: 100%;
+
+                flex: none;
+            }
+
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 480px) {
+
+            body {
+
+                padding: 5px;
+            }
+
+
+            .container {
+
+                padding: 15px;
+
+                border-radius: 10px;
+            }
+
+
+            .chart-container {
+
+                height: 330px;
+            }
+
+
+            .submit-button {
+
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =========================
+         PAGE TITLE
+    ========================= -->
+
+    <h1>
+        🗳️ RO Water Public Survey
+    </h1>
+
+
+    <p class="subtitle">
+        Share your experience after using RO purified water
+    </p>
+
+
+    <!-- =========================
+         RESULTS
+    ========================= -->
+
+    <h2>
+        Current Voting Results
+    </h2>
+
+
+    <div class="result-box">
+
+
+        <!-- RED RESULT -->
+
+        <div class="result">
+
+            <span class="red">
+                Facing the problem (A)
+            </span>
+
+
+            <span class="count red">
+
+                {{ votes["Facing the problem (A)"] | default(0) }}
+
+            </span>
+
+
+            Votes
+
+        </div>
+
+
+        <!-- GREEN RESULT -->
+
+        <div class="result">
+
+            <span class="green">
+                Not facing the problem (B)
+            </span>
+
+
+            <span class="count green">
+
+                {{ votes["Not facing the problem (B)"] | default(0) }}
+
+            </span>
+
+
+            Votes
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         GRAPH
+    ========================= -->
+
+    <div class="chart-container">
+
+        <canvas id="voteChart"></canvas>
+
+    </div>
+
+
+    <!-- =========================
+         VOTING
+    ========================= -->
+
+    <div class="voting-section">
+
+
+        {% if already_voted %}
+
+
+            <!-- AFTER VOTING -->
+
+            <div class="thank-you">
+
+                <div class="success-icon">
+                    ✅
+                </div>
+
+                <h2>
+                    Thank You!
+                </h2>
+
+                <p>
+                    Your vote has been recorded.
+                </p>
+
+                <p class="already-text">
+                    You have already voted from this browser.
+                </p>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- BEFORE VOTING -->
+
+            <form action="/vote" method="POST">
+
+
+                <div class="vote-options">
+
+
+                    <!-- RED OPTION -->
+
+                    <div class="vote-option">
+
+                        <label class="red">
+
+                            <input
+                                type="radio"
+                                name="candidate"
+                                value="Facing the problem (A)"
+                                required
+                            >
+
+                            Facing the problem (A)
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- GREEN OPTION -->
+
+                    <div class="vote-option">
+
+                        <label class="green">
+
+                            <input
+                                type="radio"
+                                name="candidate"
+                                value="Not facing the problem (B)"
+                                required
+                            >
+
+                            Not facing the problem (B)
+
+                        </label>
+
+                    </div>
+
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="submit-button">
+
+                    Submit Vote
+
+                </button>
+
+
+            </form>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================
+     GRAPH JAVASCRIPT
+========================= -->
+
+<script>
+
+
+    /* Get vote counts from Flask */
+
+    const problem = Number(
+        {{ votes["Facing the problem (A)"] | default(0) }}
+    );
+
+
+    const noProblem = Number(
+        {{ votes["Not facing the problem (B)"] | default(0) }}
+    );
+
+
+    /* Get canvas */
+
+    const ctx = document.getElementById("voteChart");
+
+
+    /* Create chart */
+
+    new Chart(ctx, {
+
+        type: "bar",
+
+
+        data: {
+
+            labels: [
+
+                "Facing the problem (A)",
+
+                "Not facing the problem (B)"
+
+            ],
+
+
+            datasets: [
+
+                {
+
+                    label: "Facing the problem",
+
+                    data: [
+
+                        problem,
+
+                        0
+
+                    ],
+
+                    backgroundColor: "#e00000",
+
+                    borderColor: "#b00000",
+
+                    borderWidth: 1,
+
+                    barPercentage: 0.30,
+
+                    categoryPercentage: 0.60
+
+                },
+
+
+                {
+
+                    label: "Not facing the problem",
+
+                    data: [
+
+                        0,
+
+                        noProblem
+
+                    ],
+
+                    backgroundColor: "#008f20",
+
+                    borderColor: "#006b18",
+
+                    borderWidth: 1,
+
+                    barPercentage: 0.30,
+
+                    categoryPercentage: 0.60
+
+                }
+
+            ]
+
+        },
+
+
+        plugins: [ChartDataLabels],
+
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+
+            plugins: {
+
+
+                /* GRAPH TITLE */
+
+                title: {
+
+                    display: true,
+
+                    text: "Problems Faced by the Public Using RO Water After Purification",
+
+                    font: {
+
+                        size: 20,
+
+                        weight: "bold"
+
+                    },
+
+                    padding: {
+
+                        bottom: 20
+
+                    }
+
+                },
+
+
+                /* LEGEND */
+
+                legend: {
+
+                    display: true,
+
+                    position: "top"
+
+                },
+
+
+                /* NUMBER ABOVE BAR */
+
+                datalabels: {
+
+                    anchor: "end",
+
+                    align: "top",
+
+                    color: "#333",
+
+                    font: {
+
+                        weight: "bold",
+
+                        size: 16
+
+                    },
+
+                    formatter: function(value) {
+
+                        return value;
+
+                    }
+
+                }
+
+            },
+
+
+            scales: {
+
+
+                y: {
+
+                    beginAtZero: true,
+
+                    ticks: {
+
+                        stepSize: 1
+
+                    },
+
+                    title: {
+
+                        display: true,
+
+                        text: "Number of Votes"
+
+                    }
+
+                },
+
+
+                x: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "Public Response"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+</script>
+
+
+</body>
+
+</html>
