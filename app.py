@@ -1,37 +1,23 @@
-from flask import Flask, render_template, request, redirect, session
-import sqlite3
 import os
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# Secret key for session
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "ro-water-survey-secret-key"
-)
+# Database file
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "votes.db")
 
-DATABASE = "votes.db"
+# Candidate options
+CANDIDATES = [
+    "Facing the problem (A)",
+    "Not facing the problem (B)"
+]
 
-
-# ==========================================
-# DATABASE CONNECTION
-# ==========================================
-
-def get_db_connection():
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
-    return connection
-
-
-# ==========================================
-# CREATE DATABASE AND TABLE
-# ==========================================
 
 def create_database():
-
-    connection = get_db_connection()
-
-    cursor = connection.cursor()
+    """Create the votes table if it does not already exist."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS votes (
@@ -40,155 +26,100 @@ def create_database():
         )
     """)
 
-    connection.commit()
-    connection.close()
+    conn.commit()
+    conn.close()
 
 
-# ==========================================
-# GET VOTE COUNTS
-# ==========================================
-
-def get_vote_counts():
-
-    connection = get_db_connection()
-
-    cursor = connection.cursor()
+def get_votes():
+    """Get vote counts for all candidates."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT candidate, COUNT(*) AS total
+        SELECT candidate, COUNT(*)
         FROM votes
         GROUP BY candidate
     """)
 
-    results = cursor.fetchall()
+    rows = cursor.fetchall()
+    conn.close()
 
-    connection.close()
-
+    # Start every candidate at 0
     votes = {
-        "Facing the problem (A)": 0,
-        "Not facing the problem (B)": 0
+        candidate: 0
+        for candidate in CANDIDATES
     }
 
-    for row in results:
-
-        candidate = row["candidate"]
-        total = row["total"]
-
-        if candidate in votes:
-            votes[candidate] = total
+    # Update with actual database values
+    for candidate, count in rows:
+        votes[candidate] = count
 
     return votes
 
 
-# ==========================================
-# HOME PAGE
-# ==========================================
-
 @app.route("/")
 def home():
+    """Display voting page and current results."""
+    create_database()
 
-    votes = get_vote_counts()
-
-    already_voted = session.get("already_voted", False)
+    votes = get_votes()
 
     return render_template(
         "index.html",
-        votes=votes,
-        already_voted=already_voted
+        votes=votes
     )
 
-
-# ==========================================
-# SUBMIT VOTE
-# ==========================================
 
 @app.route("/vote", methods=["POST"])
 def vote():
-
-    # Prevent the same browser session
-    # from voting more than once
-
-    if session.get("already_voted", False):
-
-        return redirect("/")
-
-
-    # Get selected radio button
-
+    """Store a submitted vote."""
     candidate = request.form.get("candidate")
 
+    # Only accept valid candidates
+    if candidate not in CANDIDATES:
+        return redirect(url_for("home"))
 
-    # Allowed voting options
-
-    valid_candidates = [
-        "Facing the problem (A)",
-        "Not facing the problem (B)"
-    ]
-
-
-    # Check whether a valid option was selected
-
-    if candidate not in valid_candidates:
-
-        return redirect("/")
-
-
-    # Store vote in database
-
-    connection = get_db_connection()
-
-    cursor = connection.cursor()
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO votes (candidate)
-        VALUES (?)
-        """,
+        "INSERT INTO votes (candidate) VALUES (?)",
         (candidate,)
     )
 
-    connection.commit()
+    conn.commit()
+    conn.close()
 
-    connection.close()
-
-
-    # Mark this browser as already voted
-
-    session["already_voted"] = True
+    return redirect(url_for("home"))
 
 
-    # Show updated results
+@app.route("/results")
+def results():
+    """Display current voting results."""
+    create_database()
 
-    return redirect("/")
+    votes = get_votes()
 
-
-# ==========================================
-# DATABASE INITIALIZATION
-# ==========================================
-#
-# IMPORTANT:
-# This must be OUTSIDE the
-# if __name__ == "__main__"
-#
-# because Render uses Gunicorn:
-#
-# gunicorn app:app
-#
-# Gunicorn does not execute the
-# __main__ section.
-# ==========================================
-
-create_database()
+    return render_template(
+        "index.html",
+        votes=votes
+    )
 
 
-# ==========================================
-# RUN APPLICATION LOCALLY
-# ==========================================
+@app.route("/health")
+def health():
+    """Simple health check for Render."""
+    return "OK", 200
+
 
 if __name__ == "__main__":
+    create_database()
+
+    port = int(os.environ.get("PORT", 5000))
 
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        debug=False
+        port=port,
+        debug=False,
+        use_reloader=False
     )
