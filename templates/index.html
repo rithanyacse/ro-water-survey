@@ -416,12 +416,9 @@
 
             <span class="count red">
 
-                {{ votes["Facing the problem (A)"] | default(0) }}
+                {{ percentages["Facing the problem (A)"] | default(0) }}%
 
             </span>
-
-
-            Votes
 
         </div>
 
@@ -437,12 +434,9 @@
 
             <span class="count green">
 
-                {{ votes["Not facing the problem (B)"] | default(0) }}
+                {{ percentages["Not facing the problem (B)"] | default(0) }}%
 
             </span>
-
-
-            Votes
 
         </div>
 
@@ -575,15 +569,15 @@
 <script>
 
 
-    /* Get vote counts from Flask */
+    /* Get percentage values from Flask */
 
     const problem = Number(
-        {{ votes["Facing the problem (A)"] | default(0) }}
+        {{ percentages["Facing the problem (A)"] | default(0) }}
     );
 
 
     const noProblem = Number(
-        {{ votes["Not facing the problem (B)"] | default(0) }}
+        {{ percentages["Not facing the problem (B)"] | default(0) }}
     );
 
 
@@ -715,7 +709,7 @@
                 },
 
 
-                /* NUMBER ABOVE BAR */
+                /* PERCENTAGE ABOVE BAR */
 
                 datalabels: {
 
@@ -735,7 +729,13 @@
 
                     formatter: function(value) {
 
-                        return value;
+                        if (value === 0) {
+
+                            return "";
+
+                        }
+
+                        return value + "%";
 
                     }
 
@@ -747,13 +747,23 @@
             scales: {
 
 
+                /* Y AXIS */
+
                 y: {
 
                     beginAtZero: true,
 
+                    max: 100,
+
                     ticks: {
 
-                        stepSize: 1
+                        stepSize: 10,
+
+                        callback: function(value) {
+
+                            return value + "%";
+
+                        }
 
                     },
 
@@ -761,12 +771,14 @@
 
                         display: true,
 
-                        text: "Number of Votes"
+                        text: "Percentage"
 
                     }
 
                 },
 
+
+                /* X AXIS */
 
                 x: {
 
